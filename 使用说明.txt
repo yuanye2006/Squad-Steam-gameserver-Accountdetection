@@ -1,0 +1,9 @@
+1.先运行玩家解析器【如果你有自己的rcon玩家解析器，让他把内容输出到rconlog.txt中也可以】
+2.配置sq.ini为你目标服务器的rcon
+3.配置hh.ini为你后端封禁的地址和你的steam apikey
+# Steam API Key，申请链接https://steamcommunity.com/dev/apikey，打不开加速
+white.txt每行一个steamid【白名单】
+云端白名单不要改变地址
+4.启动插件即可自动检测
+
+本插件版本为1.0测试版
