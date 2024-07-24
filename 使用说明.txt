@@ -4,6 +4,6 @@
 # Steam API Key，申请链接https://steamcommunity.com/dev/apikey，打不开加速
 white.txt每行一个steamid【白名单】
 云端白名单不要改变地址
-4.启动插件即可自动检测
+4.玩家解析器获取响应【2分钟】完毕后，启动插件即可自动检测
 
-本插件版本为1.0测试版
+本插件版本为1.1测试版
