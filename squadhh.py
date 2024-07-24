@@ -4,6 +4,7 @@ import time
 import configparser
 import random
 from datetime import datetime, timedelta
+from rcon import Rcon  # 引入Rcon模块
 
 # 从 hh.ini 配置文件中读取配置
 config = configparser.ConfigParser()
@@ -11,6 +12,13 @@ config.read('hh.ini')
 API_KEY = config.get('settings', 'steam_api_key')
 BAN_URL = config.get('settings', 'ban_url')
 CLOUD_WHITELIST_URL = config.get('settings', 'cloud_whitelist_url')
+RCON_HOST = config.get('rcon', 'host')
+RCON_PORT = config.get('rcon', 'port')
+RCON_PASSWORD = config.get('rcon', 'password')
+
+# 初始化Rcon
+rcon = Rcon(RCON_HOST, RCON_PORT, RCON_PASSWORD)
+rcon.connect()
 
 # 从 rconlog.txt 中提取 steam64id
 def extract_steam64id(filename):
@@ -172,30 +180,18 @@ def log_suspected_black_account(steam64id, player_name):
 def generate_random_id():
     return ''.join(random.choices('0123456789', k=8))
 
-# 发送封禁请求，重试3次
-def send_ban_request(steam64id):
+# 通过Rcon发送封禁命令
+def send_ban_request_rcon(steam64id, player_name):
     random_id = generate_random_id()
     reason = f'本封禁为黑号自动封禁插件封禁可进群解封-此封禁id需截图- (封禁ID: {random_id})'
-    params = {
-        'id': steam64id,
-        'reason': reason,
-        'time': '7d'
-    }
-    attempts = 3
-    for attempt in range(attempts):
-        try:
-            print(f'发送封禁请求: {params}')  # 打印请求数据
-            response = requests.get(BAN_URL, params=params, timeout=10)  # 使用GET请求
-            print(f'封禁请求响应状态码: {response.status_code}')  # 打印响应状态码
-            print(f'封禁请求响应内容: {response.text}')  # 打印响应内容
-            if response.status_code == 200:
-                response_json = response.json()
-                if 'message' in response_json and response_json['message'] == '已将该玩家封禁':
-                    return True
-        except requests.exceptions.RequestException as e:
-            print(f'连接到 {BAN_URL} 出错: {e}')
-        time.sleep(2)  # 重试之前等待2秒
-    return False
+    command = f'AdminBan {player_name or steam64id} 7d "{reason}"'
+    try:
+        rcon.command(command)
+        print(f'Rcon封禁请求发送成功: {command}')
+        return True
+    except Exception as e:
+        print(f'Rcon封禁请求发送失败: {command}, 错误: {e}')
+        return False
 
 def main():
     whitelist = load_whitelist('white.txt')
@@ -231,7 +227,7 @@ def main():
                     print("25分钟窗口重置")
 
                 if ban_count < ban_limit:
-                    if send_ban_request(steam64id):
+                    if send_ban_request_rcon(steam64id, player_name):
                         print(f'成功封禁 {steam64id}')
                         ban_count += 1
                         cloud_whitelist = fetch_cloud_whitelist(CLOUD_WHITELIST_URL)  # 成功封禁后更新云端白名单
@@ -245,7 +241,6 @@ def main():
 
 if __name__ == '__main__':
     main()
-
 
 
 
